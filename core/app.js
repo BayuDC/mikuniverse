@@ -9,5 +9,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(require('../routes/home'));
+app.use((req, res) => res.sendStatus(404));
 
 module.exports = app;
