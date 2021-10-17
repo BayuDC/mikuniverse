@@ -1,5 +1,7 @@
 const { Client, Collection, Intents } = require('discord.js');
+
 const prefix = process.env.BOT_PREFIX || '!';
+const token = process.env.BOT_TOKEN;
 
 const client = new Client({
     intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
@@ -26,4 +28,5 @@ client.on('messageCreate', message => {
     }
 });
 
-module.exports = client;
+client.once('ready', () => console.log('Bot is ready'));
+client.login(token);

@@ -1,8 +1,8 @@
 const path = require('path');
 const { Router } = require('express');
-const multer = require('multer');
 const Category = require('../models/category');
 const mikuniverse = require('../lib/mikuniverse');
+const { upload } = require('../utils/middleware');
 const router = Router();
 
 router.get('/', (req, res) => {
@@ -21,26 +21,14 @@ router.get('/:category', async (req, res, next) => {
     });
 });
 
-router.post(
-    '/:category',
-    multer({
-        dest: './temp/',
-        fileFilter(req, file, cb) {
-            if (file.mimetype == 'image/jpeg' || file.mimetype == 'image/png') {
-                return cb(null, true);
-            }
-            cb(null, false);
-        },
-    }).single('pic'),
-    async (req, res, next) => {
-        const category = await Category.findOne({ name: req.params.category });
-        if (!category) return next();
+router.post('/:category', upload.single('pic'), async (req, res, next) => {
+    const category = await Category.findOne({ name: req.params.category });
+    if (!category) return next();
 
-        await mikuniverse.sync(category.name).create(req.file);
+    await mikuniverse.sync(category.name).create(req.file);
 
-        res.sendStatus('201');
-    }
-);
+    res.sendStatus('201');
+});
 
 router.get('/i/:name', (req, res) => {
     const name = req.params.name;
