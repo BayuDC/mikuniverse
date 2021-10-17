@@ -1,5 +1,6 @@
 const app = require('./core/app');
 const client = require('./core/client');
+const db = require('./core/database');
 
 const port = process.env.PORT || 3000;
 const token = process.env.BOT_TOKEN;

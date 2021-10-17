@@ -1,24 +1,28 @@
-const fs = require('fs');
 const path = require('path');
 const { Router } = require('express');
 const multer = require('multer');
+const Category = require('../models/category');
+const mikuniverse = require('../lib/mikuniverse');
 const router = Router();
 
 router.get('/', (req, res) => {
     res.send('Hello World');
 });
 
-router.get('/miku', (req, res, next) => {
-    fs.readdir('./data', (err, files) => {
-        if (err) return next();
+router.get('/:category', async (req, res, next) => {
+    const category = await Category.findOne({ name: req.params.category });
+    if (!category) return next();
 
-        const file = files[Math.floor(Math.random() * files.length)];
-        res.json({ img: `/i/${file}` });
+    const picture = await mikuniverse.sync(category.name).find();
+    if (!picture) return next();
+
+    res.send({
+        url: picture.url,
     });
 });
 
 router.post(
-    '/miku',
+    '/:category',
     multer({
         dest: './temp/',
         fileFilter(req, file, cb) {
@@ -27,12 +31,12 @@ router.post(
             }
             cb(null, false);
         },
-    }).single('img'),
-    (req, res) => {
-        const file = req.file;
-        const formats = { 'image/jpeg': 'jpg', 'image/png': 'png' };
+    }).single('pic'),
+    async (req, res, next) => {
+        const category = await Category.findOne({ name: req.params.category });
+        if (!category) return next();
 
-        fs.rename(file.path, `./data/${file.filename}.${formats[file.mimetype]}`, () => {}); // for now
+        await mikuniverse.sync(category.name).create(req.file);
 
         res.sendStatus('201');
     }
