@@ -1,4 +1,5 @@
 const { Client, Collection, Intents } = require('discord.js');
+const Category = require('../models/category');
 
 const prefix = process.env.BOT_PREFIX || '!';
 const token = process.env.BOT_TOKEN;
@@ -7,8 +8,9 @@ const client = new Client({
     intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
 });
 
+client.mikuChannels = new Collection();
 client.commands = new Collection();
-for (file of ['ping']) {
+for (file of ['ping', 'init']) {
     const command = require(`../commands/${file}.js`);
     client.commands.set(command.name, command);
 }
@@ -22,11 +24,20 @@ client.on('messageCreate', message => {
     if (!client.commands.has(command)) return;
 
     try {
-        client.commands.get(command).execute(message, args);
+        client.commands.get(command).execute(message, ...args);
     } catch (error) {
         console.log(error);
     }
 });
 
-client.once('ready', () => console.log('Bot is ready'));
+client.once('ready', async () => {
+    console.log('Bot is ready');
+
+    (await Category.find()).forEach(category => {
+        client.mikuChannels.set(category.name, client.channels.cache.get(category.channel));
+    });
+});
+
 client.login(token);
+
+module.exports = client.mikuChannels;

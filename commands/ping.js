@@ -1,6 +1,6 @@
 module.exports = {
     name: 'ping',
-    async execute(message, args) {
+    async execute(message) {
         await message.channel.send('Pong!');
     },
 };

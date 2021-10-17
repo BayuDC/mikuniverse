@@ -1,19 +1,26 @@
-const path = require('path');
 const { Router } = require('express');
-const Category = require('../models/category');
-const mikuniverse = require('../lib/mikuniverse');
 const { upload } = require('../utils/middleware');
+const mikuniverse = require('../lib/mikuniverse');
 const router = Router();
 
 router.get('/', (req, res) => {
     res.send('Hello World');
 });
 
-router.get('/:category', async (req, res, next) => {
-    const category = await Category.findOne({ name: req.params.category });
-    if (!category) return next();
+router.use('/:category', async (req, res, next) => {
+    const category = req.params.category;
+    const channel = req.app.locals.mikuChannels.get(category);
+    if (!channel) return res.sendStatus(404);
 
-    const picture = await mikuniverse.sync(category.name).find();
+    const mikuModel = mikuniverse.sync(category, channel);
+
+    res.locals.mikuModel = mikuModel;
+    next();
+});
+
+router.get('/:category', async (req, res, next) => {
+    const mikuModel = res.locals.mikuModel;
+    const picture = await mikuModel.find();
     if (!picture) return next();
 
     res.send({
@@ -21,19 +28,12 @@ router.get('/:category', async (req, res, next) => {
     });
 });
 
-router.post('/:category', upload.single('pic'), async (req, res, next) => {
-    const category = await Category.findOne({ name: req.params.category });
-    if (!category) return next();
+router.post('/:category', upload.single('pic'), async (req, res) => {
+    const mikuModel = res.locals.mikuModel;
 
-    await mikuniverse.sync(category.name).create(req.file);
+    await mikuModel.create(req.file);
 
     res.sendStatus('201');
-});
-
-router.get('/i/:name', (req, res) => {
-    const name = req.params.name;
-
-    res.sendFile(path.join(__dirname, `../data/${name}`));
 });
 
 module.exports = router;

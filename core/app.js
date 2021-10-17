@@ -14,3 +14,7 @@ app.use(require('../routes/home'));
 app.use((req, res) => res.sendStatus(404));
 
 app.listen(port, () => console.log('App listening at port', port));
+
+module.exports = mikuChannels => {
+    app.locals.mikuChannels = mikuChannels;
+};
