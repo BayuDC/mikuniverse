@@ -33,8 +33,8 @@ client.on('messageCreate', message => {
 client.once('ready', async () => {
     console.log('Bot is ready');
 
-    (await Category.find()).forEach(category => {
-        client.mikuChannels.set(category.name, client.channels.cache.get(category.channel));
+    (await Category.find()).forEach(async category => {
+        client.mikuChannels.set(category.name, await client.channels.fetch(category.channel));
     });
 });
 

@@ -24,6 +24,7 @@ router.get('/:category', async (req, res, next) => {
     if (!picture) return next();
 
     res.send({
+        id: picture.id,
         url: picture.url,
     });
 });
@@ -34,7 +35,25 @@ router.post('/:category', upload.single('pic'), async (req, res) => {
     const mikuModel = res.locals.mikuModel;
     await mikuModel.create(req.file);
 
-    res.sendStatus('201');
+    res.sendStatus(201);
+});
+
+router.put('/:category', upload.single('pic'), async (req, res) => {
+    if (!req.body.id || !req.file) return res.sendStatus(418);
+
+    const mikuModel = res.locals.mikuModel;
+    await mikuModel.update(req.body.id, req.file);
+
+    res.sendStatus(204);
+});
+
+router.delete('/:category', async (req, res) => {
+    if (!req.body.id) return res.sendStatus(418);
+
+    const mikuModel = res.locals.mikuModel;
+    await mikuModel.delete(req.body.id);
+
+    res.sendStatus(204);
 });
 
 module.exports = router;
