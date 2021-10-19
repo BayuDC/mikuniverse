@@ -15,7 +15,7 @@ for (file of ['ping', 'init']) {
     client.commands.set(command.name, command);
 }
 
-client.on('messageCreate', message => {
+client.on('messageCreate', async message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -24,8 +24,9 @@ client.on('messageCreate', message => {
     if (!client.commands.has(command)) return;
 
     try {
-        client.commands.get(command).execute(message, ...args);
+        await client.commands.get(command).execute(message, ...args);
     } catch (error) {
+        await message.channel.send('Something went wrong');
         console.log(error);
     }
 });

@@ -2,7 +2,9 @@ const Category = require('../models/category');
 
 module.exports = {
     name: 'init',
-    async execute(message, name) {
+    async execute(message, name, nsfw) {
+        if (!name) return await message.channel.send("**I'm a teapot**");
+
         const category = await Category.findOne({ $or: [{ name }, { channel: message.channel.id }] });
         if (category) {
             if (category.name == name) {
@@ -14,9 +16,13 @@ module.exports = {
             return;
         }
 
-        await Category.create({ name, channel: message.channel.id });
+        nsfw = nsfw == 'nsfw';
+        await Category.create({ name, channel: message.channel.id, nsfw });
         message.client.mikuChannels.set(name, message.channel);
-        // TODO set permissions
+
+        await message.channel.permissionOverwrites.create(message.client.user, { SEND_MESSAGES: true });
+        await message.channel.permissionOverwrites.edit(message.channel.guild.roles.everyone, { SEND_MESSAGES: false });
+        await message.channel.setNSFW(nsfw);
 
         await message.channel.send(`Category **${name}** successfully created`);
     },
