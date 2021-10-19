@@ -17,8 +17,4 @@ app.listen(port, () => console.log('App listening at port', port));
 
 module.exports = mikuChannels => {
     app.locals.mikuChannels = mikuChannels;
-    console.log(mikuChannels);
-    setTimeout(() => {
-        console.log(mikuChannels);
-    }, 5000);
 };
