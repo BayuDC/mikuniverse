@@ -26,6 +26,7 @@ router.get('/:category', async (req, res, next) => {
     res.send({
         id: picture.id,
         url: picture.url,
+        sauce: picture.sauce,
     });
 });
 
@@ -33,7 +34,7 @@ router.post('/:category', upload.single('pic'), async (req, res) => {
     if (!req.file) return res.sendStatus(418);
 
     const mikuModel = res.locals.mikuModel;
-    await mikuModel.create(req.file);
+    await mikuModel.create(req.file, req.body.sauce);
 
     res.sendStatus(201);
 });
