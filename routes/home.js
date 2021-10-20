@@ -30,16 +30,21 @@ router.get('/:category', async (req, res, next) => {
     });
 });
 
-router.post('/:category', upload.single('pic'), async (req, res) => {
-    if (!req.file) return res.sendStatus(418);
+router.post('/:category', upload('pic'), async (req, res) => {
+    try {
+        const mikuModel = res.locals.mikuModel;
+        await mikuModel.create(req.file, req.body.sauce);
 
-    const mikuModel = res.locals.mikuModel;
-    await mikuModel.create(req.file, req.body.sauce);
-
-    res.sendStatus(201);
+        res.sendStatus(201);
+    } catch (err) {
+        if (err.name == 'AbortError') {
+            return res.status(504).send({ err: 'Upload failed due to slow connection, please try again!' });
+        }
+        res.sendStatus(500);
+    }
 });
 
-router.put('/:category', upload.single('pic'), async (req, res) => {
+router.put('/:category', upload('pic'), async (req, res) => {
     if (!req.body.id || !req.file) return res.sendStatus(418);
 
     const mikuModel = res.locals.mikuModel;
