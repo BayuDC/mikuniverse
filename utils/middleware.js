@@ -1,3 +1,4 @@
+const fs = require('fs/promises');
 const multer = require('multer');
 
 module.exports = {
@@ -22,15 +23,25 @@ module.exports = {
 
                     return res.sendStatus(400);
                 }
-                if (required && !req.file) return res.sendStatus(418);
-                next();
+                if (!req.file && required) return res.status(418).send({ err: 'Image file is required' });
+                if (!req.file) return next();
+
+                const file = req.file;
+                const imgFormats = { 'image/jpeg': 'jpg', 'image/png': 'png' };
+                const filePath = `./temp/${file.filename}.${imgFormats[file.mimetype]}`;
+
+                fs.rename(file.path, filePath).then(() => {
+                    file.path = filePath;
+                    file.destroy = () => fs.unlink(file.path);
+                    next();
+                });
             });
         };
     },
     parseId() {
         return (req, res, next) => {
             const id = req.query.id || req.body.id;
-            if (!id) return res.sendStatus(418);
+            if (!id) return res.status(418).send({ err: 'Id is required' });
 
             res.locals.id = id;
             next();

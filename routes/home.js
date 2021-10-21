@@ -30,18 +30,21 @@ router.get('/:category', async (req, res, next) => {
     });
 });
 
-router.post('/:category', upload('pic', true), async (req, res) => {
-    try {
-        const mikuModel = res.locals.mikuModel;
-        await mikuModel.create(req.file, req.body.sauce);
+router.post('/:category', upload('pic', true));
+router.post('/:category', async (req, res) => {
+    const { mikuModel } = res.locals;
+    const err = await mikuModel.create({
+        file: req.file,
+        sauce: req.body.sauce,
+    });
 
-        res.sendStatus(201);
-    } catch (err) {
-        if (err.name == 'AbortError') {
-            return res.status(504).send({ err: 'Upload failed due to slow connection, please try again!' });
-        }
-        res.sendStatus(500);
+    if (err) {
+        if (err.code == 'TIME_OUT') return res.status(504).send({ err: err.message });
+
+        return res.status(500).send({ err: 'Something went wrong' });
     }
+
+    res.sendStatus(201);
 });
 
 router.put('/:category', upload('pic'), parseId());
@@ -65,8 +68,9 @@ router.put('/:category', async (req, res) => {
     if (err) {
         if (err.code == 'INVALID_ID') return res.status(400).send({ err: err.message });
         if (err.code == 'NOT_FOUND') return res.status(404).send({ err: err.message });
+        if (err.code == 'TIME_OUT') return res.status(504).send({ err: err.message });
 
-        return res.sendStatus(500);
+        return res.status(500).send({ err: 'Something went wrong' });
     }
 
     res.sendStatus(204);
