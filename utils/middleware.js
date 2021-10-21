@@ -1,7 +1,7 @@
 const multer = require('multer');
 
 module.exports = {
-    upload(field) {
+    upload(field, required) {
         return (req, res, next) => {
             multer({
                 dest: './temp/',
@@ -22,10 +22,18 @@ module.exports = {
 
                     return res.sendStatus(400);
                 }
-                if (!req.file) return res.sendStatus(418);
-
+                if (required && !req.file) return res.sendStatus(418);
                 next();
             });
+        };
+    },
+    parseId() {
+        return (req, res, next) => {
+            const id = req.query.id || req.body.id;
+            if (!id) return res.sendStatus(418);
+
+            res.locals.id = id;
+            next();
         };
     },
 };
