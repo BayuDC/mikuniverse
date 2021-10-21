@@ -38,13 +38,10 @@ module.exports = {
             });
         };
     },
-    parseId() {
-        return (req, res, next) => {
-            const id = req.query.id || req.body.id;
-            if (!id) return res.status(418).send({ err: 'Id is required' });
+    parseId: (req, res, next) => {
+        const id = req.query.id || req.body.id;
 
-            res.locals.id = id;
-            next();
-        };
+        res.locals.id = id;
+        next();
     },
 };

@@ -3,10 +3,6 @@ const { upload, parseId } = require('../utils/middleware');
 const mikuniverse = require('../lib/mikuniverse');
 const router = Router();
 
-router.get('/', (req, res) => {
-    res.send('Hello World');
-});
-
 router.use('/:category', async (req, res, next) => {
     const category = req.params.category;
     const channel = req.app.locals.mikuChannels.get(category);
@@ -47,7 +43,8 @@ router.post('/:category', async (req, res) => {
     res.sendStatus(201);
 });
 
-router.put('/:category', upload('pic'), parseId());
+router.put('/:category', upload('pic'));
+router.put('/:category', parseId());
 router.put('/:category', (req, res, next) => {
     if (req.body.category) {
         res.locals.category = {
@@ -66,7 +63,7 @@ router.put('/:category', async (req, res) => {
     });
 
     if (err) {
-        if (err.code == 'INVALID_ID') return res.status(400).send({ err: err.message });
+        if (err.code == 'INVALID') return res.status(400).send({ err: err.message });
         if (err.code == 'NOT_FOUND') return res.status(404).send({ err: err.message });
         if (err.code == 'TIME_OUT') return res.status(504).send({ err: err.message });
 
