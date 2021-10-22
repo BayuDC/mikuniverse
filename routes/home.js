@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { upload, parseId } = require('../utils/middleware');
+const { upload, parseId, parseCategory } = require('../utils/middleware');
 const mikuniverse = require('../lib/mikuniverse');
 const router = Router();
 
@@ -44,16 +44,7 @@ router.post('/:category', async (req, res) => {
 });
 
 router.put('/:category', upload('pic'));
-router.put('/:category', parseId());
-router.put('/:category', (req, res, next) => {
-    if (req.body.category) {
-        res.locals.category = {
-            name: req.body.category,
-            channel: req.app.locals.mikuChannels.get(req.body.category),
-        };
-    }
-    next();
-});
+router.put('/:category', parseId, parseCategory);
 router.put('/:category', async (req, res) => {
     const { id, category, mikuModel } = res.locals;
     const err = await mikuModel.update(id, {

@@ -2,6 +2,21 @@ const fs = require('fs/promises');
 const multer = require('multer');
 
 module.exports = {
+    parseId: (req, res, next) => {
+        const id = req.query.id || req.body.id;
+
+        res.locals.id = id;
+        next();
+    },
+    parseCategory: (req, res, next) => {
+        if (req.body.category) {
+            res.locals.category = {
+                name: req.body.category,
+                channel: req.app.locals.mikuChannels.get(req.body.category),
+            };
+        }
+        next();
+    },
     upload(field, required) {
         return (req, res, next) => {
             multer({
@@ -37,11 +52,5 @@ module.exports = {
                 });
             });
         };
-    },
-    parseId: (req, res, next) => {
-        const id = req.query.id || req.body.id;
-
-        res.locals.id = id;
-        next();
     },
 };
