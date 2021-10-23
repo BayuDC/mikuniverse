@@ -1,7 +1,31 @@
 const fs = require('fs/promises');
 const multer = require('multer');
+const MikuniverseModel = require('../lib/mikuniverse-model');
+
+const getModel = (req, res, next) => {
+    const category = req.params.category ?? res.locals.mikuModel;
+    const channel = req.app.locals.mikuChannels.get(category);
+    if (!channel) return res.status(404).send({ err: 'Category not found' });
+
+    const mikuModel = new MikuniverseModel(category, channel);
+
+    res.locals.mikuModel = mikuModel;
+    next();
+};
+const getModelById = (req, res, next) => {
+    const { id, mikuModel } = res.locals;
+    if (mikuModel) return next();
+
+    MikuniverseModel.fetch(id).then(category => {
+        res.locals.mikuModel = category;
+
+        getModel(req, res, next);
+    });
+};
 
 module.exports = {
+    getModel,
+    getModelById,
     parseId: (req, res, next) => {
         const id = req.query.id || req.body.id;
 

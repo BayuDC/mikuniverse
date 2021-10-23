@@ -1,18 +1,8 @@
 const { Router } = require('express');
-const { upload, parseId, parseCategory } = require('../utils/middleware');
-const mikuniverse = require('../lib/mikuniverse');
+const { upload, parseId, parseCategory, getModel, getModelById } = require('../utils/middleware');
 const router = Router();
 
-router.use('/:category', async (req, res, next) => {
-    const category = req.params.category;
-    const channel = req.app.locals.mikuChannels.get(category);
-    if (!channel) return res.sendStatus(404);
-
-    const mikuModel = mikuniverse.sync(category, channel);
-
-    res.locals.mikuModel = mikuModel;
-    next();
-});
+router.use('/:category', getModel);
 
 router.get('/:category', async (req, res, next) => {
     const mikuModel = res.locals.mikuModel;
@@ -43,9 +33,10 @@ router.post('/:category', async (req, res) => {
     res.sendStatus(201);
 });
 
-router.put('/:category', upload('pic'));
-router.put('/:category', parseId, parseCategory);
-router.put('/:category', async (req, res) => {
+router.put('/:category?', upload('pic'));
+router.put('/:category?', parseId, parseCategory);
+router.put('/:category?', getModelById);
+router.put('/:category?', async (req, res) => {
     const { id, category, mikuModel } = res.locals;
     const err = await mikuModel.update(id, {
         file: req.file,
@@ -64,7 +55,7 @@ router.put('/:category', async (req, res) => {
     res.sendStatus(204);
 });
 
-router.delete('/:category', async (req, res) => {
+router.delete('/:category?', async (req, res) => {
     if (!req.body.id) return res.sendStatus(418);
 
     const mikuModel = res.locals.mikuModel;
