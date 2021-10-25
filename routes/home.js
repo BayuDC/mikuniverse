@@ -64,4 +64,8 @@ router.delete('/:category?', async (req, res) => {
     res.sendStatus(204);
 });
 
+router.use((err, req, res, next) => {
+    res.status(err?.code ?? 500).send({ error: err?.message ?? 'Something went wrong' });
+});
+
 module.exports = router;
