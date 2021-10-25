@@ -48,21 +48,19 @@ module.exports = {
                 limits: { fileSize: 8 * 1024 * 1024 },
                 fileFilter(req, file, cb) {
                     if (file.mimetype != 'image/jpeg' && file.mimetype != 'image/png') {
-                        const multerError = new multer.MulterError('NOT_AN_IMAGE_FILE');
-                        multerError.message = 'File is not an image';
-                        return cb(multerError, false);
+                        return cb(new multer.MulterError('NOT_AN_IMAGE'), false);
                     }
 
                     cb(null, true);
                 },
             }).single(field)(req, res, err => {
                 if (err) {
-                    if (err.code == 'NOT_AN_IMAGE_FILE') return res.status(415).send({ err: err.message });
-                    if (err.code == 'LIMIT_FILE_SIZE') return res.status(413).send({ err: err.message });
+                    if (err.code == 'LIMIT_FILE_SIZE') return next(new MikuniverseError(413, err.message));
+                    if (err.code == 'NOT_AN_IMAGE') return next(new MikuniverseError(415, 'File is not an image'));
 
-                    return res.sendStatus(400);
+                    return next(new MikuniverseError(400, 'Bad Request'));
                 }
-                if (!req.file && required) return res.status(418).send({ err: 'Image file is required' });
+                if (!req.file && required) return next(new MikuniverseError(418, 'Image file is required'));
                 if (!req.file) return next();
 
                 const file = req.file;

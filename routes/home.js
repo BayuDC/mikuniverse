@@ -17,20 +17,20 @@ router.get('/:category', async (req, res, next) => {
 });
 
 router.post('/:category', upload('pic', true));
-router.post('/:category', async (req, res) => {
+router.post('/:category', async (req, res, next) => {
     const { mikuModel } = res.locals;
-    const err = await mikuModel.create({
+    const { err, picture } = await mikuModel.create({
         file: req.file,
         sauce: req.body.sauce,
     });
 
-    if (err) {
-        if (err.code == 'TIME_OUT') return res.status(504).send({ err: err.message });
+    if (err) return next(err);
 
-        return res.status(500).send({ err: 'Something went wrong' });
-    }
-
-    res.sendStatus(201);
+    res.status(201).send({
+        id: picture.id,
+        url: picture.url,
+        sauce: picture.sauce,
+    });
 });
 
 router.put('/:category?', upload('pic'));
