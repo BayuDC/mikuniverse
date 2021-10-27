@@ -16,29 +16,35 @@ const getModelById = (req, res, next) => {
     const { id, mikuModel } = res.locals;
     if (mikuModel) return next();
 
-    MikuniverseModel.fetch(id).then(category => {
-        res.locals.mikuModel = category;
-
-        getModel(req, res, next);
-    });
+    MikuniverseModel.fetch(id)
+        .then(category => {
+            res.locals.mikuModel = category;
+            getModel(req, res, next);
+        })
+        .catch(next);
 };
 
 module.exports = {
     getModel,
     getModelById,
     parseId: (req, res, next) => {
-        const id = req.query.id || req.body.id;
+        const id = req.query.id ?? req.body.id;
+
+        if (!id) return next(new MikuniverseError(400, 'Id is required'));
+        if (!id.match(/^[0-9a-fA-F]{24}$/)) return next(new MikuniverseError(400, 'Invalid id'));
 
         res.locals.id = id;
         next();
     },
     parseCategory: (req, res, next) => {
-        if (req.body.category) {
-            res.locals.category = {
-                name: req.body.category,
-                channel: req.app.locals.mikuChannels.get(req.body.category),
-            };
+        const category = req.body.category;
+        if (category) {
+            const channel = req.app.locals.mikuChannels.get(category);
+            if (!channel) return next(new MikuniverseError(404, `Category '${category}' does not exist`));
+
+            res.locals.category = { name: category, channel };
         }
+
         next();
     },
     upload(field, required) {

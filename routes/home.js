@@ -13,6 +13,7 @@ router.get('/:category', async (req, res, next) => {
         id: picture.id,
         url: picture.url,
         sauce: picture.sauce,
+        category: picture.category,
     });
 });
 
@@ -30,29 +31,30 @@ router.post('/:category', async (req, res, next) => {
         id: picture.id,
         url: picture.url,
         sauce: picture.sauce,
+        category: picture.category,
     });
 });
 
 router.put('/:category?', upload('pic'));
-router.put('/:category?', parseId, parseCategory);
+router.put('/:category?', parseId);
+router.put('/:category?', parseCategory);
 router.put('/:category?', getModelById);
-router.put('/:category?', async (req, res) => {
+router.put('/:category?', async (req, res, next) => {
     const { id, category, mikuModel } = res.locals;
-    const err = await mikuModel.update(id, {
+    const { err, picture } = await mikuModel.update(id, {
         file: req.file,
         sauce: req.body.sauce,
         category,
     });
 
-    if (err) {
-        if (err.code == 'INVALID') return res.status(400).send({ err: err.message });
-        if (err.code == 'NOT_FOUND') return res.status(404).send({ err: err.message });
-        if (err.code == 'TIME_OUT') return res.status(504).send({ err: err.message });
+    if (err) return next(err);
 
-        return res.status(500).send({ err: 'Something went wrong' });
-    }
-
-    res.sendStatus(204);
+    res.send({
+        id: picture.id,
+        url: picture.url,
+        sauce: picture.sauce,
+        category: picture.category,
+    });
 });
 
 router.delete('/:category?', async (req, res) => {
@@ -65,7 +67,9 @@ router.delete('/:category?', async (req, res) => {
 });
 
 router.use((err, req, res, next) => {
-    res.status(err?.code ?? 500).send({ error: err?.message ?? 'Something went wrong' });
+    req.file?.destroy();
+    res.status(err?.code ?? 500);
+    res.send({ error: err?.message ?? 'Something went wrong' });
 });
 
 module.exports = router;
