@@ -57,11 +57,13 @@ router.put('/:category?', async (req, res, next) => {
     });
 });
 
-router.delete('/:category?', async (req, res) => {
-    if (!req.body.id) return res.sendStatus(418);
+router.delete('/:category?', parseId);
+router.delete('/:category?', getModelById);
+router.delete('/:category?', async (req, res, next) => {
+    const { id, mikuModel } = res.locals;
+    const err = await mikuModel.delete(id);
 
-    const mikuModel = res.locals.mikuModel;
-    await mikuModel.delete(req.body.id);
+    if (err) return next(err);
 
     res.sendStatus(204);
 });
