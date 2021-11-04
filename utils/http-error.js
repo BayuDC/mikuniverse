@@ -1,4 +1,4 @@
-class MikuniverseError extends Error {
+class HttpError extends Error {
     constructor(code, message) {
         super();
         this.code = code;
@@ -6,4 +6,4 @@ class MikuniverseError extends Error {
     }
 }
 
-module.exports = MikuniverseError;
+module.exports = HttpError;

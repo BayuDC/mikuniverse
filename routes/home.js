@@ -1,13 +1,31 @@
 const { Router } = require('express');
-const { upload, parseId, parseCategory, getModel, getModelById } = require('../utils/middleware');
+const validator = require('express-validator');
+
+const MikuniverseModel = require('../lib/mikuniverse-model');
+const Category = require('../models/category');
+const HttpError = require('../utils/http-error');
+const uploadImg = require('../utils/upload-img');
 const router = Router();
 
-router.use('/:category', getModel);
+const getModel = async (req, res, next, value) => {
+    const category = await Category.findOne({ name: value });
+    const channel = req.app.locals.mikuChannels.get(value);
+
+    if (!category || !channel) return next(new HttpError(404, 'Category not found'));
+
+    res.locals.mikuModel = new MikuniverseModel(category.name, channel);
+    next();
+};
+
+router.param('category', getModel);
+
+router.post('/:category', uploadImg('pic', true));
+router.put('/:category?', uploadImg('pic'));
 
 router.get('/:category', async (req, res, next) => {
-    const mikuModel = res.locals.mikuModel;
+    const { mikuModel } = res.locals;
     const picture = await mikuModel.find();
-    if (!picture) return next();
+    if (!picture) return next(new HttpError(404, 'No picture found'));
 
     res.send({
         id: picture.id,
@@ -17,7 +35,6 @@ router.get('/:category', async (req, res, next) => {
     });
 });
 
-router.post('/:category', upload('pic', true));
 router.post('/:category', async (req, res, next) => {
     const { mikuModel } = res.locals;
     const { err, picture } = await mikuModel.create({
@@ -35,16 +52,52 @@ router.post('/:category', async (req, res, next) => {
     });
 });
 
-router.put('/:category?', upload('pic'));
-router.put('/:category?', parseId);
-router.put('/:category?', parseCategory);
-router.put('/:category?', getModelById);
+router.all('/:category?', [
+    validator
+        .body('id')
+        .exists()
+        .withMessage('Id is required')
+        .bail()
+        .matches(/^[0-9a-fA-F]{24}$/)
+        .withMessage('Invalid id'),
+    validator
+        .body('category')
+        .if((value, { req }) => req.method == 'PUT')
+        .optional()
+        .custom(async (value, { req }) => {
+            const category = await Category.findOne({ name: value });
+            const channel = req.app.locals.mikuChannels.get(value);
+
+            if (!category || !channel) return Promise.reject(`Category '${value}' does not exist`);
+            return Promise.resolve();
+        })
+        .bail()
+        .customSanitizer((value, { req }) => {
+            return { name: value, channel: req.app.locals.mikuChannels.get(value) };
+        }),
+    (req, res, next) => {
+        const err = validator.validationResult(req);
+        if (!err.isEmpty()) {
+            const arrErr = err.array().map(err => err.msg);
+            return next(new HttpError(400, arrErr.length > 1 ? arrErr : arrErr[0]));
+        }
+
+        next();
+    },
+]);
+router.all('/:category?', (req, res, next) => {
+    if (res.locals.mikuModel) return next();
+    MikuniverseModel.fetch(req.body.id)
+        .then(value => getModel(req, res, next, value))
+        .catch(next);
+});
+
 router.put('/:category?', async (req, res, next) => {
-    const { id, category, mikuModel } = res.locals;
-    const { err, picture } = await mikuModel.update(id, {
+    const { mikuModel } = res.locals;
+    const { err, picture } = await mikuModel.update(req.body.id, {
         file: req.file,
         sauce: req.body.sauce,
-        category,
+        category: req.body.category,
     });
 
     if (err) return next(err);
@@ -57,11 +110,9 @@ router.put('/:category?', async (req, res, next) => {
     });
 });
 
-router.delete('/:category?', parseId);
-router.delete('/:category?', getModelById);
 router.delete('/:category?', async (req, res, next) => {
-    const { id, mikuModel } = res.locals;
-    const err = await mikuModel.delete(id);
+    const { mikuModel } = res.locals;
+    const err = await mikuModel.delete(req.body.id);
 
     if (err) return next(err);
 
@@ -70,6 +121,8 @@ router.delete('/:category?', async (req, res, next) => {
 
 router.use((err, req, res, next) => {
     req.file?.destroy();
+    if (!(err instanceof HttpError)) return next();
+
     res.status(err?.code ?? 500);
     res.send({ error: err?.message ?? 'Something went wrong' });
 });
