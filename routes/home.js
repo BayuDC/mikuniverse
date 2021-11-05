@@ -27,12 +27,7 @@ router.get('/:category', async (req, res, next) => {
     const picture = await mikuModel.find();
     if (!picture) return next(new HttpError(404, 'No picture found'));
 
-    res.send({
-        id: picture.id,
-        url: picture.url,
-        sauce: picture.sauce,
-        category: picture.category,
-    });
+    res.send({ picture });
 });
 
 router.post('/:category', async (req, res, next) => {
@@ -44,12 +39,7 @@ router.post('/:category', async (req, res, next) => {
 
     if (err) return next(err);
 
-    res.status(201).send({
-        id: picture.id,
-        url: picture.url,
-        sauce: picture.sauce,
-        category: picture.category,
-    });
+    res.status(201).send({ picture });
 });
 
 router.all('/:category?', [
@@ -102,12 +92,7 @@ router.put('/:category?', async (req, res, next) => {
 
     if (err) return next(err);
 
-    res.send({
-        id: picture.id,
-        url: picture.url,
-        sauce: picture.sauce,
-        category: picture.category,
-    });
+    res.send({ picture });
 });
 
 router.delete('/:category?', async (req, res, next) => {
