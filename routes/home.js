@@ -22,9 +22,10 @@ router.param('category', getModel);
 router.post('/:category', uploadImg('pic', true));
 router.put('/:category?', uploadImg('pic'));
 
-router.get('/:category', async (req, res, next) => {
+router.get('/:category', validator.query('q').toInt(), async (req, res, next) => {
     const { mikuModel } = res.locals;
-    const picture = await mikuModel.find();
+    const quantity = req.query.q;
+    const picture = await mikuModel.find(quantity);
     if (!picture) return next(new HttpError(404, 'No picture found'));
 
     res.send({ picture });
